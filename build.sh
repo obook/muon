@@ -89,9 +89,17 @@ INSTALLED_SIZE=$(du -sk "$PKG_DIR" | cut -f1)
 # Create minimal debian structure for dpkg-shlibdeps
 mkdir -p "$PKG_DIR/debian"
 echo "Source: muon" > "$PKG_DIR/debian/control"
-DEPS=$(cd "$PKG_DIR" && dpkg-shlibdeps -O usr/bin/muon usr/lib/x86_64-linux-gnu/libQApt.so.* 2>/dev/null | sed 's/shlibs:Depends=//')
-DEPS=$(echo "$DEPS" | tr ',' '\n' | grep -v "libqapt" | sed '/^$/d' | tr '\n' ',' | sed 's/,$//')
+DEPS=$(cd "$PKG_DIR" && dpkg-shlibdeps --ignore-missing-info -O usr/bin/muon usr/lib/x86_64-linux-gnu/libQApt.so.* 2>/dev/null | sed 's/shlibs:Depends=//')
+DEPS=$(echo "$DEPS" | tr ',' '\n' | grep -vi "libqapt" | sed 's/^ *//;s/ *$//;/^$/d' | paste -sd, -)
 rm -rf "$PKG_DIR/debian"
+
+# Compose final Depends (avoid leading/trailing commas if DEPS is empty)
+EXTRA_DEPS="apt-xapian-index, software-properties-qt"
+if [ -n "$DEPS" ]; then
+    FINAL_DEPS="$DEPS, $EXTRA_DEPS"
+else
+    FINAL_DEPS="$EXTRA_DEPS"
+fi
 
 cat > "$PKG_DIR/DEBIAN/control" << EOF
 Package: muon
@@ -99,7 +107,7 @@ Version: ${MUON_VERSION}-1
 Architecture: $(dpkg --print-architecture)
 Maintainer: Olivier Booklage <olivier@booklage.fr>
 Installed-Size: ${INSTALLED_SIZE}
-Depends: ${DEPS}, apt-xapian-index, software-properties-qt
+Depends: ${FINAL_DEPS}
 Conflicts: libqapt3
 Description: APT package manager for KDE
  Muon is a graphical package manager for Debian/Ubuntu
