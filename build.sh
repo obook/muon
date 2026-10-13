@@ -31,6 +31,9 @@ readonly QAPT_COMMIT="c708115b81392e3712d38ac68d3e46a3fea8c090"
 # gives the version and the maintainer of the package.
 readonly CHANGELOG="/src/packaging/changelog"
 
+# A fix to QApt that its repository does not have yet, as the container sees it.
+readonly QAPT_PATCH="/src/packaging/qapt-reopen-index.patch"
+
 # Packages that shared libraries cannot reveal: Muon calls them as programs.
 readonly RUNTIME_PACKAGES="apt-xapian-index, software-properties-qt"
 
@@ -144,6 +147,15 @@ build_in_container() {
 #  IN THE CONTAINER: compile and make the package
 # ---------------------------------------------------------------
 
+# The downloaded QApt sources stay as they are: the patch goes on a copy.
+# cp -a keeps the dates of the files, so only the patched one is compiled again.
+prepare_qapt_sources() {
+    local qapt_source_dir="$1"
+    rm -rf "${qapt_source_dir}"
+    cp -a /qapt "${qapt_source_dir}"
+    patch -d "${qapt_source_dir}" -p1 < "${QAPT_PATCH}"
+}
+
 # Compile a CMake project and install it into the staging folder, which
 # becomes the content of the package.
 compile_and_stage() {
@@ -231,7 +243,8 @@ build_package() {
     version="$(dpkg-parsechangelog -l "${CHANGELOG}" -S Version)"
 
     rm -rf "${stage_dir}"
-    compile_and_stage /qapt "${work_dir}/qapt" "${stage_dir}"
+    prepare_qapt_sources "${work_dir}/qapt-src"
+    compile_and_stage "${work_dir}/qapt-src" "${work_dir}/qapt-build" "${stage_dir}"
     # Muon includes <QApt/...>, so the compiler has to be told where the
     # staged headers are: they are not in /usr/include.
     compile_and_stage /src "${work_dir}/muon" "${stage_dir}" \

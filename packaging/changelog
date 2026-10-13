@@ -1,3 +1,9 @@
+muon (6.0.0-6) unstable; urgency=medium
+
+  * Search no longer comes back empty while the search index is updated.
+
+ -- Olivier Booklage <olivier.booklage@ac-bordeaux.fr>  Tue, 13 Oct 2026 13:16:24 +0200
+
 muon (6.0.0-5) unstable; urgency=medium
 
   * Fix the maintainer address.
