@@ -1,0 +1,22 @@
+muon (6.0.0-4) unstable; urgency=medium
+
+  * Give the package an installed size: Muon showed 0.
+  * Show the changelog a package installed when there is none online.
+  * Fix "Force Version" taking the version of another package.
+
+ -- Olivier Booklage <olivier@booklage.fr>  Tue, 13 Oct 2026 12:45:53 +0200
+
+muon (6.0.0-3) unstable; urgency=medium
+
+  * Build against QApt 4 again and ship it in the package.
+  * Install next to libqapt3: the package no longer conflicts with it.
+  * Build one package per distribution, for KDE neon and Ubuntu 26.04.
+  * Stop sending a debconf socket that nobody listens on.
+
+ -- Olivier Booklage <olivier@booklage.fr>  Tue, 13 Oct 2026 12:31:00 +0200
+
+muon (6.0.0-1) unstable; urgency=medium
+
+  * Ship libqapt built against Qt 6: mixing it with the Qt 5 one crashed.
+
+ -- Olivier Booklage <olivier@booklage.fr>  Mon, 06 Apr 2026 00:57:54 +0200

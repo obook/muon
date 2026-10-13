@@ -27,9 +27,9 @@ readonly TARGETS="neon ubuntu26.04"
 readonly QAPT_REPOSITORY="https://github.com/evgeniy-harchenko/qapt"
 readonly QAPT_COMMIT="c708115b81392e3712d38ac68d3e46a3fea8c090"
 
-# Debian revision: raise it when the package changes but Muon's version does not.
-readonly PACKAGE_REVISION="3"
-readonly MAINTAINER="Olivier Booklage <olivier@booklage.fr>"
+# The changelog of the package, as the container sees it. Its first entry
+# gives the version and the maintainer of the package.
+readonly CHANGELOG="/src/packaging/changelog"
 
 # Packages that shared libraries cannot reveal: Muon calls them as programs.
 readonly RUNTIME_PACKAGES="apt-xapian-index, software-properties-qt"
@@ -171,6 +171,14 @@ remove_unpackaged_files() {
     find "${stage_dir}/usr/share/locale" -type d -empty -delete
 }
 
+# Debian packages carry their changelog compressed, under this name. Muon
+# reads it there to show the list of changes of its own package.
+install_changelog() {
+    local stage_dir="$1"
+    mkdir -p "${stage_dir}/usr/share/doc/muon"
+    gzip -9 -n -c "${CHANGELOG}" > "${stage_dir}/usr/share/doc/muon/changelog.Debian.gz"
+}
+
 # Ask dpkg which packages provide the shared libraries the programs load.
 find_library_packages() {
     local work_dir="$1"
@@ -197,7 +205,8 @@ write_control_files() {
 Package: muon
 Version: ${version}
 Architecture: $(dpkg --print-architecture)
-Maintainer: ${MAINTAINER}
+Maintainer: $(dpkg-parsechangelog -l "${CHANGELOG}" -S Maintainer)
+Installed-Size: $(du -sk --exclude=DEBIAN "${stage_dir}" | cut -f1)
 Section: admin
 Priority: optional
 Homepage: https://github.com/obook/muon
@@ -218,9 +227,8 @@ build_package() {
     local target="$1"
     local work_dir="/out/${target}"
     local stage_dir="${work_dir}/stage"
-    local muon_version
-    muon_version="$(sed -n 's/^set(PROJECT_VERSION "\(.*\)")/\1/p' /src/CMakeLists.txt)"
-    local version="${muon_version}-${PACKAGE_REVISION}"
+    local version
+    version="$(dpkg-parsechangelog -l "${CHANGELOG}" -S Version)"
 
     rm -rf "${stage_dir}"
     compile_and_stage /qapt "${work_dir}/qapt" "${stage_dir}"
@@ -230,6 +238,7 @@ build_package() {
         -DCMAKE_PREFIX_PATH="${stage_dir}/usr" \
         -DCMAKE_CXX_FLAGS="-isystem ${stage_dir}/usr/include"
     remove_unpackaged_files "${stage_dir}"
+    install_changelog "${stage_dir}"
 
     local library_packages
     library_packages="$(find_library_packages "${work_dir}" "${stage_dir}")"
