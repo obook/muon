@@ -8,40 +8,33 @@
   <img src="https://github.com/evgeniy-harchenko/muon/blob/master/assets/image.png"/>
 </p>
 
-## Install from .deb
+## Install
 
-Download the latest `.deb` from the [Releases](https://github.com/obook/muon/releases) page, then run:
+Download the package for your system from the [latest release](https://github.com/obook/muon/releases/latest):
+
+| System | Package |
+|---|---|
+| KDE neon | `muon_<version>_neon_amd64.deb` |
+| Ubuntu 26.04 | `muon_<version>_ubuntu26.04_amd64.deb` |
 
 ```bash
-sudo apt install ./muon_6.0.0-1_amd64.deb
+sudo apt install ./muon_*_amd64.deb
 ```
 
-The package bundles libqapt (Qt6/KF6), so no separate installation is required.
+Each package installs only on the system named in its file, because KDE neon and Ubuntu name their Qt and KDE Frameworks packages differently. Ubuntu 24.04 has no KDE Frameworks 6, so Muon cannot run there.
 
-## Build from source
+The package contains [QApt 4](https://github.com/evgeniy-harchenko/qapt), which Muon needs and no distribution ships. QApt 4 installs next to the `libqapt3` of the distribution.
 
-The build script handles everything automatically: installing dependencies, downloading and compiling libqapt (Qt6/KF6), building muon, and packaging a `.deb`.
+## Build the packages
+
+You need Docker. `build.sh` builds each package in a container of its distribution:
 
 ```bash
 git clone https://github.com/obook/muon.git
 cd muon
-bash build.sh
-sudo apt install ./muon_6.0.0-1_amd64.deb
+./build.sh
 ```
 
-### Build dependencies
+The packages are in `build/`. `./build.sh neon` builds that one only.
 
-```bash
-sudo apt install cmake build-essential extra-cmake-modules qt6-base-dev libkf6kio-dev kf6-kdbusaddons-dev libkf6i18n-dev kf6-kiconthemes-dev kf6-kxmlgui-dev libxapian-dev libapt-pkg-dev libpolkit-qt6-1-dev debhelper curl
-```
-
-### Runtime dependencies
-
-```bash
-sudo apt install apt-xapian-index software-properties-qt
-```
-
-## Notes
-
-- Requires KDE Neon or Ubuntu 24.04+ with KF6 packages.
-- Conflicts with the system `libqapt3` package (Qt5 version), which is removed automatically during install.
+On another distribution, install QApt 4 first, then build Muon with CMake.
