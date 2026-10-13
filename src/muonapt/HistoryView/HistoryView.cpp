@@ -200,7 +200,9 @@ HistoryView::HistoryView(QWidget *parent)
         for (const QString &package: item.purgedPackages()) {
             addChildRow(package, QApt::Package::ToPurge, purgeIcon);
         }
-        // reinstalledPackages() not available in libqapt 3.x
+        for (const QString &package: item.reinstalledPackages()) {
+            addChildRow(package, QApt::Package::ToReInstall, reinstallIcon);
+        }
     }
 
     viewLayout->addWidget(m_historyView);
